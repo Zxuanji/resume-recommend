@@ -33,4 +33,5 @@ class ExtractJobRequirement:
                 'Link': row['Link'],
                 'Qualification(Min)': row['Qualification(Min)']
             }
+            
         self.job_dict = job_dict
