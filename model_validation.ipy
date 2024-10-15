@@ -1,0 +1,38 @@
+import pandas as pd
+import spacy
+nlp = spacy.load("NER_Project")
+
+
+# 读取Excel文件并进行预测
+def validate_model(input_file, text_column='Summarized_Experience'):
+    # 读取Excel文件
+    df = pd.read_excel(input_file)
+
+    # 获取文本列
+    texts = df[text_column].tolist()
+
+    # 创建一个空列表存储结果
+    results = []
+
+    # 对每个文本进行预测
+    for idx, doc in enumerate(texts):  # 增加索引来标记每个文本
+        print(f"\n---- Predicted Entities for Text {idx + 1} ----")  # 打印标题，标识每个文本
+        doc = nlp(doc)  # 使用模型进行预测
+        entities = [(ent.text, ent.label_) for ent in doc.ents]  # 提取实体及其标签
+        for ent in doc.ents:
+            print(f"Entity: {ent.text}, Label: {ent.label_}")  # 输出实体和标签
+        results.append(entities)
+        
+    return results  # 返回所有结果
+
+
+
+
+
+
+# 主程序入口
+if __name__ == '__main__':
+    # 替换为您的Excel文件路径
+    input_file = 'SkillDesc.xlsx'  # 输入的Excel文件路径
+    # 调用验证函数
+    validate_model(input_file)

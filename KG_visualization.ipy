@@ -1,0 +1,97 @@
+from neo4j import GraphDatabase
+import pandas as pd
+import spacy
+
+# 初始化Neo4j驱动
+uri = "bolt://localhost:7687"  # Neo4j的bolt URI
+username = "neo4j"  # 默认用户名
+password = "Selladokuk980820"  # 你的Neo4j密码
+
+# 连接到Neo4j
+driver = GraphDatabase.driver(uri, auth=(username, password))
+
+# 定义函数来在Neo4j中创建节点和关系
+# 创建岗位和技能图谱
+def create_job_skill_graph(job_id_list, job_skill_mapping, job_titles, experience_skills):
+    with driver.session() as session:
+        for idx, job_id in enumerate(job_id_list):
+            job_title = job_titles[idx]
+            # 忽略无效的job_title
+            if job_title and not job_title.startswith(('Job', 'Qualification', 'Link', 'Responsibility')):  # 忽略表头等无效数据
+                print(f"Creating Job Node: MERGE (j:Job {{id: {job_id}}}) SET j.title = {job_title}, j.shape = 'square'")
+                # 创建岗位节点
+                session.run(
+                    "MERGE (j:Job {id: $job_id}) "
+                    "SET j.title = $job_title, j.shape = 'square'",
+                    job_id=job_id, job_title=job_title
+                )
+
+                # 获取与岗位相关的技能
+                skills = job_skill_mapping.get(job_id, [])
+                for skill in skills:
+                    is_matched = skill in experience_skills
+                    skill_label = 'Matched_Skill' if is_matched else 'Unmatched_Skill'
+                    # 创建技能节点
+                    session.run(
+                        f"MERGE (s:{skill_label}{{name: $skill}})",
+                        skill = skill
+                    )
+                    # 创建岗位和技能之间的关系
+                    session.run(
+                        "MATCH (j:Job {id: $job_id}), (s{name: $skill}) "
+                        "MERGE (j)-[:REQUIRES]->(s)",
+                        job_id=job_id, skill=skill
+                    )
+            else:
+                print(f"Skipping invalid job title: {job_title}")
+
+                
+model = spacy.load("NER_Project")
+
+def predict_skills(text):
+    doc = model(text)  # 使用模型进行预测，具体实现取决于你模型的类型
+    skills = [ent.text for ent in doc.ents]  # 假设模型可以提取出技能实体
+    return skills
+
+job_df = pd.read_excel('Job_Desc.xlsx',header=0)
+
+# 假设你收到了一些岗位的ID，并且希望根据这些ID提取岗位描述
+job_ids_to_predict = [9,10,11,12,13,14,15,16]  # 你需要查询的岗位ID列表
+
+# 提取与这些ID对应的岗位描述
+filtered_jobs = job_df[job_df['S/N'].isin(job_ids_to_predict)]
+
+#print(filtered_jobs)
+#job_name_list = job_df[job_df['Job Title'].isin(job_ids_to_predict)]
+
+
+# 用模型预测每个岗位的技能，并生成映射关系
+
+job_skill_mapping = {}
+job_name_list = []
+
+for index, row in filtered_jobs.iterrows():
+    # 确保 S/N 是整数，并且 Job Title 和 Job Desc 都不为空
+    if isinstance(row['S/N'], int) and pd.notna(row['Job Title']) and pd.notna(row['Job_Desc']):
+        job_id = row['S/N']
+        description = row['Job_Desc']
+        predicted_skills = predict_skills(description)  # 使用模型预测技能
+        # 确保 skills 不为空
+        
+        unique_skills = list(set(predicted_skills))  # 转换为集合后再转回列表，去除重复技能
+        job_skill_mapping[job_id] = unique_skills  # 存储去重后的技能列表
+        job_name_list.append(row['Job Title'])
+    else:
+        print(f"Skipping invalid row: {row}")
+
+        
+# 输出结果
+#print(job_skill_mapping)
+experience_text = "Proficient in Python, OpenCV, and Flask for building facial recognition attendance systems, with experience developing image processing algorithms to detect and recognize faces in real time, automating employee attendance tracking."  # Replace with actual resume text
+experience_skills = predict_skills(experience_text)
+
+# Create the job and skill graph in Neo4j
+create_job_skill_graph(job_ids_to_predict, job_skill_mapping, job_name_list, experience_skills)
+
+# Close the Neo4j connection
+driver.close()

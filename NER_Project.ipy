@@ -1,0 +1,158 @@
+import pandas as pd
+import spacy
+import re
+from spacy.training.example import Example
+from spacy.util import minibatch, compounding
+import tensorflow as tf
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import precision_score,recall_score,f1_score
+print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
+
+
+# import SkillDesc dataset
+df = pd.read_excel('SkillDesc.xlsx') 
+texts = df['Summarized Experience']  # extract column of 'Summarized Experience' as input
+tech_stacks = df['Skills']  # extract column of 'Skills' as target label
+
+X_train,X_test,y_train,y_test=train_test_split(texts,tech_stacks,test_size=0.1,random_state=42)
+
+# function to convert the 'Skills' column to spacy format to feed the model
+def convert_to_spacy_format(texts, tech_stacks):
+    def find_tech_entities(text,tech_stack):
+        entities=[]
+        for tech in map(str.strip,tech_stack.split(',')):
+            #use regex to find whole-word matches(case-insenstitive)
+            pattern=re.compile(rf'\b{re.escape(tech)}\b',re.IGNORECASE)
+            match=pattern.search(text)
+            if match:
+                start, end=match.start(), match.end()
+                entities.append((start, end, 'TECH'))
+        return entities
+    
+    data = []
+    for text, tech_stack in zip(texts, tech_stacks):
+        entities =find_tech_entities(text,tech_stack)
+        data.append((text, {"entities": entities}))
+    return data
+
+# apply converting function to the data
+training_data = convert_to_spacy_format(X_train,y_train)
+testing_data=convert_to_spacy_format(X_test,y_test)
+
+
+def is_overlapping(span1, span2):
+    return span1[0] < span2[1] and span2[0] < span1[1]
+
+
+
+def clean_entities(data):
+    cleaned_data=[]
+    for example in data:
+        text, annotations = example
+        entities = annotations["entities"]
+        non_overlapping_entities = []
+    
+        for i, (start, end, label) in enumerate(entities):
+            overlap = False
+            for j, (other_start, other_end, _) in enumerate(entities):
+                if i != j and is_overlapping((start, end), (other_start, other_end)):
+                    overlap = True
+                    break
+            if not overlap:
+                non_overlapping_entities.append((start, end, label))
+    
+        cleaned_data.append((text, {"entities": non_overlapping_entities}))
+    return cleaned_data
+
+cleaned_test=clean_entities(testing_data)
+cleaned_train=clean_entities(training_data)
+
+nlp = spacy.load("en_core_web_sm")
+
+ner = nlp.get_pipe("ner")
+
+
+ner.add_label("TECH")
+
+
+unaffected_pipes = [pipe for pipe in nlp.pipe_names if pipe != "ner"]
+learning_rate=5e-5
+from random import shuffle
+
+with nlp.disable_pipes(*unaffected_pipes):
+    optimizer = nlp.begin_training()
+    optimizer.learn_rate=learning_rate
+    for itn in range(35):  
+        losses = {}
+        shuffle(cleaned_train)
+        batches = minibatch(cleaned_train, size=compounding(4.0, 32.0, 1.001))
+        for batch in batches:
+            examples = []
+            for text, annotations in batch:
+                doc = nlp.make_doc(text)
+                example = Example.from_dict(doc, annotations)
+                examples.append(example)
+            nlp.update(examples, drop=0.05, losses=losses)
+        print(f"Iteration {itn}: Losses {losses}")
+
+# store the model
+nlp.to_disk("NER_Project")
+
+# load the model
+nlp = spacy.load("NER_Project")
+
+# testing
+def extract_skills_from_text(nlp, text):
+    """Extract predicted skills from text using the trained NER model."""
+    doc = nlp(text)
+    return {ent.text.lower().strip() for ent in doc.ents if ent.label_ == "TECH"}
+
+def extract_skills_name(text, entities):
+    """Extract true skills from text using the given entity indices."""
+    return {text[start:end].lower().strip() for (start, end, label) in entities if label == "TECH"}
+
+def validate_model(model, test_data):
+    # all_predicted_entities=[]
+    # all_true_entities=[]
+    all_precisions = []
+    all_recalls = []
+    all_f1_scores = []
+
+    for text, annotations in test_data:
+        true_skills = extract_skills_name(text,annotations['entities'])
+        predicted_skills = extract_skills_from_text(model, text)
+
+        # Calculate precision, recall, and F1 score for each text
+        precision = len(true_skills & predicted_skills) / len(predicted_skills) if predicted_skills else 0
+        recall = len(true_skills & predicted_skills) / len(true_skills) if true_skills else 0
+        f1 = (2 * precision * recall / (precision + recall)) if (precision + recall) > 0 else 0
+
+        all_precisions.append(precision)
+        all_recalls.append(recall)
+        all_f1_scores.append(f1)
+        # predicted_entities=[(ent.start_char,ent.end_char,ent.label_) for ent in doc.ents]
+        # true_entities=annotations['entities']
+
+        # matched_true, matched_pred = match_entities(true_entities, predicted_entities, iou_threshold)
+        # all_predicted_entities.append(matched_pred)
+        # all_true_entities.append(matched_true)
+        # Calculate the average metrics over all examples
+        avg_precision = sum(all_precisions) / len(all_precisions)
+        avg_recall = sum(all_recalls) / len(all_recalls)
+        avg_f1 = sum(all_f1_scores) / len(all_f1_scores)
+
+    return avg_precision, avg_recall, avg_f1
+
+
+precision, recall, f1= validate_model(nlp, cleaned_test)
+print(f"Precision: {precision:.2f}")
+print(f"Recall: {recall:.2f}")
+print(f"F1 Score: {f1:.2f}")
+
+# def flatten_entities(entities):
+#     return [(start, end, label) for entity_list in entities for (start, end, label) in entity_list]
+
+# # Flatten predicted and true entities
+# flat_predicted = flatten_entities(predicted_entities)
+# flat_true = flatten_entities(true_entities)
+# print(flat_predicted)
