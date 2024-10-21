@@ -1,0 +1,93 @@
+.App {
+  text-align: center;
+  font-family: Arial, sans-serif;
+}
+
+header {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+h1 {
+  font-size: 36px;
+  color: #333;
+}
+
+.upload-container {
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  padding: 20px;
+  width: 60%;
+  margin: 0 auto;
+  background-color: #f9f9f9;
+}
+
+h2 {
+  margin-bottom: 20px;
+  color: #555;
+}
+
+
+.dropZone {
+  border: 2px dashed #ccc; /* 虚线边框，颜色为浅灰色 */
+  border-radius: 10px;      /* 圆角 */
+  padding: 40px;            /* 内边距，确保内容不紧贴边框 */
+  margin-bottom: 20px;
+  background-color: #fff;    /* 背景颜色为白色 */
+  display: inline-block;     /* 确保内容在边框内 */
+}
+
+
+.upload-icon {
+  width: 100px; /* 调整图片的宽度 */
+  margin-bottom: 20px; /* 图片与文本之间的间距 */
+}
+
+
+.custom-file-upload, .analyze-button {
+  display: inline-block;
+  padding: 12px 24px;
+  cursor: pointer;
+  border: 2px solid #ccc; /* 固定灰色边框 */
+  background-color: white; /* 背景为白色 */
+  color: #333; /* 字体颜色为深灰色 */
+  font-size: 16px; /* 统一字体大小 */
+  border-radius: 5px;
+  margin: 10px; /* 为两个按钮之间添加一些间距 */
+}
+
+input[type="file"] {
+  display: none; /* 隐藏文件选择输入框 */
+}
+
+.file-upload-status {
+  margin-top: 20px;
+}
+
+.file-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.progress-bar {
+  background-color: #e0e0e0;
+  border-radius: 10px;
+  height: 10px;
+  width: 100%;
+}
+
+.progress {
+  background-color: #61dafb;
+  height: 10px;
+  border-radius: 10px;
+}
+
+.analyze-button-container {
+  text-align: center;  /* 确保按钮容器居中对齐 */
+  margin-top: 20px;
+}
+
+
+

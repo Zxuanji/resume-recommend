@@ -1,0 +1,12 @@
+import pandas as pd
+
+file_path = "Job.xlsx"
+df = pd.read_excel(file_path)
+
+df['Job_Desc'] = df['Responsibility'].astype(str) + ' ' + df['Qualification_Min'].astype(str) + ' ' + df['Qualification_Advanced'].astype(str)
+
+# 打印或保存拼接后的数据
+print(df['Job_Desc'])
+
+# 保存拼接后的数据到新的 Excel
+df.to_excel('Job_Desc.xlsx', index=False)

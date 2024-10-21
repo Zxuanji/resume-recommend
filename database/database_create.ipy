@@ -1,0 +1,40 @@
+import sqlite3
+
+def initialize_db():
+    conn = sqlite3.connect('database/experience_job_data.db')
+    cursor = conn.cursor()
+
+    # 创建工作数据表
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS job_data (
+        id TEXT PRIMARY KEY,
+        title TEXT,
+        company TEXT,
+        website TEXT,
+        qualification TEXT
+    )
+    ''')
+
+    # 创建经验数据表
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS experience_data (
+        id TEXT PRIMARY KEY,
+        experience TEXT
+    )
+    ''')
+
+    # 检查 experience_data 表中是否存在 job_ids 列，如果不存在则添加
+    cursor.execute("PRAGMA table_info(experience_data)")
+    columns = cursor.fetchall()
+    column_names = [column[1] for column in columns]
+
+    if 'job_ids' not in column_names:
+        cursor.execute('''
+        ALTER TABLE experience_data ADD COLUMN job_ids TEXT
+        ''')
+
+    conn.commit()
+    conn.close()
+
+# 运行该函数来创建数据库和数据表
+initialize_db()

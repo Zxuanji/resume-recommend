@@ -1,0 +1,90 @@
+  
+  /* 标题样式 */
+  h1 {
+    font-size: 36px;
+    color: #333;
+    margin-top: 20px;
+    text-align: center; /* 确保标题居中 */
+  }
+  
+  
+
+/* 推荐工作部分的容器，添加边框 */
+.results-container {
+    border: 2px solid #ddd; /* 边框样式 */
+    border-radius: 10px;    /* 圆角 */
+    padding: 20px;          /* 内边距 */
+    margin: 20px auto;      /* 水平居中并与页面其他部分保持距离 */
+    background-color: #f9f9f9; /* 背景颜色 */
+    width: 95%;             /* 设置宽度为 90% */
+  }
+  
+  
+  /* 推荐工作部分 */
+  .job-recommendations {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);  /* 每行显示四个卡片 */
+    gap: 20px;  /* 卡片之间的间距 */
+  }
+  
+  .job-card {
+    background-color: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 20px; /* 增加内边距 */
+    text-align: left;  /* 确保文字左对齐 */
+    width: 260px;      /* 增加卡片宽度 */
+    height: 180px;     /* 增加卡片高度 */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* 顶部和底部内容分布 */
+  }
+  
+  .job-card h3, .job-card p {
+    margin: 0; /* 移除外边距 */
+    padding: 0; /* 移除内边距，确保紧凑布局 */
+  }
+  
+  .job-card h3 {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 4px; /* 微调与公司名的间距 */
+  }
+  
+  .job-card p {
+    font-size: 14px;
+    color: #666;
+  }
+  
+  .job-card a {
+    text-decoration: none;
+    color: #333;
+    font-weight: bold;
+    align-self: flex-end; /* 确保链接在右下角 */
+    margin-top: auto; /* 确保链接位置固定在底部 */
+  }  
+  
+
+  /* 能力分析部分 */
+  .competence-analysis {
+    margin-top: 40px;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+  }
+  
+  .analysis-container {
+    height: 400px; /* 设置高度用于容纳图表 */
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    position: relative;
+  }
+  
+  .analysis-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+  }

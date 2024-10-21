@@ -1,0 +1,12 @@
+Bart-train/best_performance_model_loss_1.2537.pth
+# 忽略虚拟环境
+Final/
+
+# 忽略 Python 缓存文件
+*.pyc
+__pycache__/
+
+# 忽略生成的HTML图文件
+job_skill_graph*.html
+
+uploads/
