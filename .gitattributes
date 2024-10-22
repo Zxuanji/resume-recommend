@@ -1,0 +1,2 @@
+Bart-train/best_performance_model_loss_1.2537.pth filter=lfs diff=lfs merge=lfs -text
+.venv/lib/python3.9/site-packages/torch/lib/libtorch_cpu.dylib filter=lfs diff=lfs merge=lfs -text
